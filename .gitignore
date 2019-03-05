@@ -36,6 +36,9 @@ build/Release
 node_modules/
 jspm_packages/
 
+# Generated stuff
+lib/
+
 # TypeScript v1 declaration files
 typings/
 
@@ -59,3 +62,6 @@ typings/
 
 # next.js build output
 .next
+
+# Operating system
+.DS_Store
