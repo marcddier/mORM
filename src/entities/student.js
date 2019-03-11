@@ -3,7 +3,7 @@ import Entity from './entity';
 export default class Student extends Entity{
   static meta() {
     return {
-      name: "Stgerg kzhfiuhifhudent",
+      name: "Student",
       columns: {
         id: {
           primary: true,

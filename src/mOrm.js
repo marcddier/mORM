@@ -38,6 +38,18 @@ export default class mOrm {
     }
     // console.log(this.config)
 
+    // console.log(dbConfig.entities[0].meta());
+
+    this.config.synchronise = dbConfig.synchronise;
+    this.config.entities = dbConfig.entities;
+    this.entities = {};
+
+    this.config.entities.forEach(element => {
+    this.entities[element.name] = element; 
+    });
+
+    // console.log(this.entities)
+
     // instanciate DB engine
     switch (this.config.type) {
       case 'postgres':
@@ -52,18 +64,15 @@ export default class mOrm {
         break;
     }
 
-    console.log(this.config.entities);
-    // console.log(this.config.entities[0]);
-    // console.log(this.config.entities[0].name);
-    // console.log(this.config.entities[0].columns);
-    // console.log(typeof this.config.entities[0]);
-    
-    
-
-    // this.config.entities.forEach(element => {
-    //   console.log(element.)
-    // });
-
     await this.dbInstance.initialize();
+  }
+
+  getEntity(name) {
+    for(let entity in this.entities){
+      if (entity.toLowerCase() == name.toLowerCase()) {
+        return new this.entities[entity](this.dbInstance, name);
+      }
+    }
+    throw new Error(`Table called ${name} doesn't exist`);
   }
 }
