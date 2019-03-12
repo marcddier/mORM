@@ -1,6 +1,7 @@
 import { Client } from "pg";
 import { isEmpty } from 'lodash';
 import Core from './core'
+import { log } from '../log'
 
 export default class PostgreSQL extends Core {
   // ...
@@ -47,6 +48,7 @@ export default class PostgreSQL extends Core {
 
       this.client.query(`create table if not exists ${tableName} (${tableParams})`)
       console.log(`create table if not exists ${tableName} (${tableParams})`)
+      log(`create table if not exists ${tableName} (${tableParams})`, 'INFO')
     });
   }
 
@@ -65,6 +67,7 @@ export default class PostgreSQL extends Core {
     if(this.synchronize) {
       await this.entities.forEach(entity => {
         this.client.query(`drop table if exists ${entity.name.toLowerCase()}`)
+        log(`drop table if exists ${entity.name.toLowerCase()}`, 'INFO')
       })
     }
   }
@@ -77,9 +80,11 @@ export default class PostgreSQL extends Core {
     console.log(`insert into ${entity.name} (${columns}) values (${values})`);
     try {
       let res = await this.client.query(`insert into ${entity.name} (${columns}) values (${values}) RETURNING *`)
+      log(`insert into ${entity.name} (${columns}) values (${values}) RETURNING *`, 'INFO')
       return res.rows[0];
     } catch (e) {
       console.log(`cannot insert into ${entity.name}`)
+      log(`cannot insert into ${entity.name}`, 'ERROR')
     }
   }
 
@@ -88,51 +93,64 @@ export default class PostgreSQL extends Core {
     try {
       console.log(`select count(*) from ${entity.name.toLowerCase()}`)
       let res = await this.client.query(`select count(*) from ${entity.name.toLowerCase()}`);
+      log(`select count(*) from ${entity.name.toLowerCase()}`, 'INFO')
       return res.rows[0].count;
     } catch (e) {
       console.log(`cannot count ${entity.name} -- ${e}`);
+      log(`cannot count ${entity.name} -- ${e}`, 'ERROR')
     }
   }
 
-  async findByPk(entity, id, attributes ) {
+  async findByPk(entity, id, attributes = [] ) {
     // select attributes from table_name where id = id
     try {
-      let keys = Object.keys(entity.columns);
-      let pk = keys.map((key) => {
-        if (key.primary) {
-          return key;
-        } else {
-          return
+      let pk;
+      
+      for (let entitie of this.entities) {
+        if (entitie.meta().name.toLowerCase() == entity.name.toLowerCase()) {
+          for (let key in entitie.meta().columns) {
+            if (entitie.meta().columns[key].primary == true) {
+              pk = key;
+            }
+          } 
         }
-      }).join('and ');
+      }
 
-      if (isEmpty(id)) {
+      if (!isEmpty(id)) {
+        log(`need an ID for this function`, 'ERROR')
         throw new Error(`need an ID for this function`)
       }
       
+      let columns;
       if (attributes.length == 0) {
-        let columns = '*'
+        columns = '*'
       } else {
-        let columns = attributes.join(', ')
+        columns = attributes.join(', ')
       }
+      console.log(`select ${columns} from ${entity.name} where ${pk}=${id}`)
       let res = await this.client.query(`select ${columns} from ${entity.name} where ${pk}=${id}`);
+      log(`select ${columns} from ${entity.name} where ${pk}=${id}`, 'INFO')
       return res.rows[0]
     } catch (e) {
-      console.log(`cannot selectById ${entity.name} -- ${e}`);
+      console.log(`cannot selectByPk ${entity.name} -- ${e}`);
+      log(`cannot selectByPk ${entity.name} -- ${e}`, 'ERROR')
     }
   }
 
-  async findAll(entity, attributes) {
+  async findAll(entity, attributes = []) {
     // select attributes from table_name
     try {
+      let columns;
       if (attributes.length == 0) {
-        let columns = '*'
+        columns = '*'
       } else {
-        let columns = attributes.join(', ')
+        columns = attributes.join(', ')
       }
       let res = await this.client.query(`select ${columns} from ${entity.name}`);
+      log(`select ${columns} from ${entity.name}`, 'INFO')
       return res.rows;
     } catch (e) {
+      log(`cannot findAll ${entity.name} -- ${e}`, 'ERROR')
       console.log(`cannot findAll ${entity.name} -- ${e}`);
     }
   }
@@ -149,8 +167,10 @@ export default class PostgreSQL extends Core {
       }).join('and ');
       // console.log(`select ${columns} from ${entity.name.toLowerCase()} where ${values}`)
       let res = await this.client.query(`select ${columns} from ${entity.name} ${ isEmpty(values)? '' :  'where' } ${values}`)
+      log(`select ${columns} from ${entity.name} ${ isEmpty(values)? '' :  'where' } ${values}`, 'INFO')
       return res.rows[0]
     } catch (e) {
+      log(`cannot findOne ${entity.name} -- ${e}`, 'ERROR')
       console.log(`cannot findOne ${entity.name} -- ${e}`);
     }
   }
@@ -170,9 +190,11 @@ export default class PostgreSQL extends Core {
         return `${keyWhere}='${valueWhere}'`;
       }).join('and ');
 
-      let res = await this.client.query(`update ${entity.name} set ${values} where ${valuesWhere} returning *`)
+      let res = await this.client.query(`update ${entity.name} set ${values} where ${valuesWhere} returning *`);
+      log(`update ${entity.name} set ${values} where ${valuesWhere} returning *`, 'INFO')
       return res.rows[0];
     } catch (e) {
+      log(`cannot update ${entity.name} -- ${e}`, 'ERROR')
       console.log(`cannot update ${entity.name} -- ${e}`);
     }
   }
@@ -187,7 +209,9 @@ export default class PostgreSQL extends Core {
         return `${key}='${value}'`;
       }).join('and ');
       await this.client.query(`delete from ${entity.name} where ${values}`)
+      log(`delete from ${entity.name} where ${values}`, 'INFO')
     } catch (e) {
+      log(`cannot remove ${entity.name} -- ${e}`, 'ERROR')
       console.log(`cannot remove ${entity.name} -- ${e}`);
     }
   }

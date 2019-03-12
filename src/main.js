@@ -27,22 +27,22 @@ import Student from './entities/student'
     
     const studentEntity = orm.getEntity('Student')
     const saved = await studentEntity.save(student)
-    console.log(`New student ${saved.firstname}`)
+    // console.log(`New student ${saved.firstname}`)
 
     const countStudent = await studentEntity.count();
-    console.log(`we have ${countStudent} students`);
+    // console.log(`we have ${countStudent} students`);
 
     const findId = await studentEntity.findByPk(1, ['firstname', 'lastname']);
-    console.log(`the first id is :${findId.lastname} ${findId.firstname}`);
+    // console.log(`the first id is :${findId.lastname} ${findId.firstname}`);
 
     const all = await studentEntity.findAll(['firstname', 'lastname']);
-    console.log(`All ---${all}`);
+    // console.log(`All ---${all}`);
 
     const one = await studentEntity.findOne({attributes: ['firstname', 'lastname'], where: {firstname : 'Dora', lastname: 'Lexploratrice'}});
-    console.log(`One ---${one}`);
+    // console.log(`One ---${one}`);
 
     const update = await studentEntity.update({changes: {firstname: 'Dora', lastname: 'Lexploratrice'}, where: {id : 7}})
-    console.log(update);
+    // console.log(update);
 
     // await studentEntity.remove({firstname: 'Dora', lastname: 'Lexploratrice'})
 
